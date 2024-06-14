@@ -21,36 +21,23 @@ class _ContactPageState extends State<ContactPage> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
+        child: ListView(
           children: [
             header(),
             submitButton(),
+            if (isDataSubmitted) listData(),
           ],
         ),
       ),
     );
   }
 
-  submitButton() {
+  Widget submitButton() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         ElevatedButton(
-          onPressed: () {
-            setState(() {
-              final name = nameController.text;
-              final number = numberController.text;
-              submittedData.add(
-                Contact(name, number),
-              );
-              // for (var contact in submittedData) {
-              //   print('Name: ${contact.name}, Phone Number: ${contact.phoneNumber}');
-              // }
-              isDataSubmitted = true;
-              nameController.clear();
-              numberController.clear();
-            });
-          },
+          onPressed: _submitData,
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20.0),
@@ -63,7 +50,18 @@ class _ContactPageState extends State<ContactPage> {
     );
   }
 
-  header() {
+  void _submitData() {
+    setState(() {
+      final name = nameController.text;
+      final number = numberController.text;
+      submittedData.add(Contact(name, number));
+      isDataSubmitted = true;
+      nameController.clear();
+      numberController.clear();
+    });
+  }
+
+  Widget header() {
     return Column(
       children: [
         const SizedBox(height: 90),
@@ -113,17 +111,196 @@ class _ContactPageState extends State<ContactPage> {
     );
   }
 
-  listData() {
+  Widget listData() {
     return Column(
       children: [
-        Text('List Contacts'),
+        const Text('List Contacts'),
         ListView.builder(
+          shrinkWrap: true,
           itemCount: submittedData.length,
           itemBuilder: (context, index) {
             final contact = submittedData[index];
-            return ListTile();
+            return ContactListItem(
+              contact: contact,
+              onEdit: () => _editContact(index),
+              onDelete: () => _deleteContact(index),
+            );
           },
-        )
+        ),
+      ],
+    );
+  }
+
+  void _deleteContact(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DeleteContactDialog(
+          onConfirm: () {
+            setState(() {
+              submittedData.removeAt(index);
+            });
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
+
+  void _editContact(int index) {
+    final contact = submittedData[index];
+    TextEditingController nameController = TextEditingController(text: contact.name);
+    TextEditingController phoneNumberController =
+        TextEditingController(text: contact.phoneNumber);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EditContactDialog(
+          nameController: nameController,
+          phoneNumberController: phoneNumberController,
+          onSave: () {
+            final newName = nameController.text;
+            final newPhoneNumber = phoneNumberController.text;
+
+            setState(() {
+              submittedData[index] = Contact(newName, newPhoneNumber);
+            });
+
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
+}
+
+class ContactListItem extends StatelessWidget {
+  final Contact contact;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const ContactListItem({super.key, 
+    required this.contact,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final firstLetter = contact.name.substring(0, 1).toUpperCase();
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Colors.purple[300],
+        child: Text(
+          firstLetter,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      title: Text(contact.name),
+      subtitle: Text(contact.phoneNumber),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit),
+          ),
+          IconButton(
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DeleteContactDialog extends StatelessWidget {
+  final VoidCallback onConfirm;
+
+  const DeleteContactDialog({super.key, required this.onConfirm});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Confirm Deletion'),
+      content: const Text('Are you sure you want to delete this contact?'),
+      actions: <Widget>[
+        ElevatedButton(
+          onPressed: onConfirm,
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            backgroundColor: const Color(0xFF6750A4),
+          ),
+          child: const Text('Yes'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            backgroundColor: Colors.white,
+          ),
+          child: const Text(
+            'No',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class EditContactDialog extends StatelessWidget {
+  final TextEditingController nameController;
+  final TextEditingController phoneNumberController;
+  final VoidCallback onSave;
+
+  const EditContactDialog({super.key, 
+    required this.nameController,
+    required this.phoneNumberController,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Contact'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+          TextField(
+            controller: phoneNumberController,
+            decoration: const InputDecoration(labelText: 'Phone Number'),
+            keyboardType: TextInputType.number,
+          ),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: onSave,
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            backgroundColor: const Color(0xFF6750A4),
+          ),
+          child: const Text('Save'),
+        ),
       ],
     );
   }
