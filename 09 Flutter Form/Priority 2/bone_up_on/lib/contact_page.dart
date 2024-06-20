@@ -80,6 +80,7 @@ class _ContactPageState extends State<ContactPage> {
 
   Widget form() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildTextField(
           controller: nameController,
@@ -158,13 +159,18 @@ class _ContactPageState extends State<ContactPage> {
         const SizedBox(
           height: 10,
         ),
-        Center(
-          child: ElevatedButton(
-            onPressed: () {
-              _submitColor(_currentColor);
-            },
-            child: const Text('Pick Color'),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+                'Color: ${_currentColor.value.toRadixString(16).padLeft(9, '#').toUpperCase()}'),
+            ElevatedButton(
+              onPressed: () {
+                _submitColor(_currentColor);
+              },
+              child: const Text('Pick Color'),
+            ),
+          ],
         )
       ],
     );
@@ -203,13 +209,12 @@ class _ContactPageState extends State<ContactPage> {
       children: [
         const Text('Pick Files'),
         const SizedBox(height: 10),
-        Center(
-          child: ElevatedButton(
-            onPressed: () {
-              _pickFile();
-            },
-            child: const Text('Pick and open file'),
-          ),
+        Text('File name: $_submittedFile'),
+        ElevatedButton(
+          onPressed: () {
+            _pickFile();
+          },
+          child: const Text('Pick and open file'),
         )
       ],
     );
@@ -406,38 +411,43 @@ class _ContactPageState extends State<ContactPage> {
               const SizedBox(
                 height: 10,
               ),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Pick Your Color'),
-                          content: BlockPicker(
-                            pickerColor: _editingcolor,
-                            onColorChanged: (color) {
-                              setState(() {
-                                _editingcolor = color;
-                              });
-                            },
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                      'Color: ${_editingcolor.value.toRadixString(16).padLeft(9, '#').toUpperCase()}'),
+                  ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Change color'),
+                            content: BlockPicker(
+                              pickerColor: _editingcolor,
+                              onColorChanged: (color) {
+                                setState(() {
+                                  _editingcolor = color;
+                                });
                               },
-                              child: const Text('Save'),
-                            )
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  child: const Text('Pick Color'),
-                ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Save'),
+                              )
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: const Text('Pick Color'),
+                  ),
+                ],
               ),
-              Text('Pick Files'),
+              Text('File Name: $_editingFile'),
               const SizedBox(height: 10),
               Center(
                 child: ElevatedButton(
