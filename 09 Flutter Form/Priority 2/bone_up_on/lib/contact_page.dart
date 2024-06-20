@@ -361,141 +361,148 @@ class _ContactPageState extends State<ContactPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Contact'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              TextField(
-                controller: phoneNumberController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.number,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Edit Contact'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Date'),
-                  TextButton(
-                    onPressed: () async {
-                      final selectDate = await showDatePicker(
-                        context: context,
-                        initialDate: _editingDate,
-                        firstDate: DateTime(1990),
-                        lastDate: DateTime(_editingDate.year + 5),
-                      );
-                      setState(() {
-                        if (selectDate != null) {
-                          _editingDate = selectDate;
-                        }
-                      });
-                    },
-                    child: const Text('Select'),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
                   ),
-                ],
-              ),
-              Text(
-                DateFormat('dd-MM-yyyy').format(_editingDate),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Container(
-                height: 100,
-                width: double.infinity,
-                color: _editingcolor,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                  TextField(
+                    controller: phoneNumberController,
+                    decoration: const InputDecoration(labelText: 'Phone Number'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Date'),
+                      TextButton(
+                        onPressed: () async {
+                          final selectDate = await showDatePicker(
+                            context: context,
+                            initialDate: _editingDate,
+                            firstDate: DateTime(1990),
+                            lastDate: DateTime(_editingDate.year + 5),
+                          );
+                          setState(() {
+                            if (selectDate != null) {
+                              _editingDate = selectDate;
+                            }
+                          });
+                        },
+                        child: const Text('Select'),
+                      ),
+                    ],
+                  ),
                   Text(
-                      'Color: ${_editingcolor.value.toRadixString(16).padLeft(9, '#').toUpperCase()}'),
-                  ElevatedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Change color'),
-                            content: BlockPicker(
-                              pickerColor: _editingcolor,
-                              onColorChanged: (color) {
-                                setState(() {
-                                  _editingcolor = color;
-                                });
-                              },
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Save'),
-                              )
-                            ],
+                    DateFormat('dd-MM-yyyy').format(_editingDate),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    color: _editingcolor,
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          'Color: ${_editingcolor.value.toRadixString(16).padLeft(9, '#').toUpperCase()}'),
+                      ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Change color'),
+                                content: BlockPicker(
+                                  pickerColor: _editingcolor,
+                                  onColorChanged: (color) {
+                                    setState(() {
+                                      _editingcolor = color;
+                                    });
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Save'),
+                                  )
+                                ],
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                    child: const Text('Pick Color'),
+                        child: const Text('Pick Color'),
+                      ),
+                    ],
                   ),
+                  Text('File Name: $_editingFile'),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles();
+                        if (result == null) return;
+
+                        // Mendapatkan file dari result
+                        final file = result.files.first;
+                        // _openFile(file);
+                        final fileName = path.basename(file.path!);
+                        print('File : $fileName');
+
+                        setState(() {
+                          _editingFile = fileName;
+                        });
+                      },
+                      child: const Text('Pick and open file'),
+                    ),
+                  )
                 ],
               ),
-              Text('File Name: $_editingFile'),
-              const SizedBox(height: 10),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final result = await FilePicker.platform.pickFiles();
-                    if (result == null) return;
-
-                    // Mendapatkan file dari result
-                    final file = result.files.first;
-                    // _openFile(file);
-                    final fileName = path.basename(file.path!);
-                    print('File : $fileName');
-
-                    setState(() {
-                      _editingFile = fileName;
-                    });
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(Contact(
+                      nameController.text,
+                      phoneNumberController.text,
+                      _editingDate,
+                      _editingcolor,
+                      _editingFile,
+                    ));
                   },
-                  child: const Text('Pick and open file'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    backgroundColor: const Color(0xFF6750A4),
+                  ),
+                  child: const Text('Save'),
                 ),
-              )
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  submittedData[index] = Contact(
-                    nameController.text,
-                    phoneNumberController.text,
-                    _editingDate,
-                    _editingcolor,
-                    _editingFile,
-                  );
-                });
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                backgroundColor: const Color(0xFF6750A4),
-              ),
-              child: const Text('Save'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
-    );
+    ).then((editedContact) {
+      if (editedContact != null) {
+        setState(() {
+          submittedData[index] = editedContact;
+        });
+      }
+    });
   }
 }
 
