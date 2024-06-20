@@ -5,6 +5,7 @@ import 'package:form/contact_model.dart';
 import 'package:form/reusable_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
+import 'package:path/path.dart' as path;
 
 class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
@@ -19,6 +20,7 @@ class _ContactPageState extends State<ContactPage> {
   DateTime _dueDate = DateTime.now();
   final currentDate = DateTime.now();
   Color _currentColor = Colors.grey;
+  String _submittedFile = 'No File Selected';
 
   bool isDataSubmitted = false;
   List<Contact> submittedData = [];
@@ -220,6 +222,12 @@ class _ContactPageState extends State<ContactPage> {
     // Mendapatkan file dari result
     final file = result.files.first;
     // _openFile(file);
+    final fileName = path.basename(file.path!);
+    print('File : $fileName');
+
+    setState(() {
+      _submittedFile = fileName;
+    });
   }
 
   void _openFile(PlatformFile file) {
@@ -250,17 +258,20 @@ class _ContactPageState extends State<ContactPage> {
       final number = numberController.text;
       final date = _dueDate;
       final color = _currentColor;
+      final file = _submittedFile;
       submittedData.add(Contact(
         name,
         number,
         date,
         color,
+        file,
       ));
       for (var contact in submittedData) {
         print('Name: ${contact.name}');
         print('Phone Number: ${contact.phoneNumber}');
         print('Date: ${contact.date}');
         print('Color: ${contact.color}');
+        print('Color: ${contact.file}');
         print('-------------------');
       }
       isDataSubmitted = true;
@@ -340,6 +351,7 @@ class _ContactPageState extends State<ContactPage> {
         TextEditingController(text: contact.phoneNumber);
     DateTime _editingDate = contact.date;
     Color _editingcolor = contact.color;
+    String _editingFile = contact.file;
 
     showDialog(
       context: context,
@@ -424,6 +436,27 @@ class _ContactPageState extends State<ContactPage> {
                   },
                   child: const Text('Pick Color'),
                 ),
+              ),
+              Text('Pick Files'),
+              const SizedBox(height: 10),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await FilePicker.platform.pickFiles();
+                    if (result == null) return;
+
+                    // Mendapatkan file dari result
+                    final file = result.files.first;
+                    // _openFile(file);
+                    final fileName = path.basename(file.path!);
+                    print('File : $fileName');
+
+                    setState(() {
+                      _editingFile = fileName;
+                    });
+                  },
+                  child: const Text('Pick and open file'),
+                ),
               )
             ],
           ),
@@ -431,8 +464,13 @@ class _ContactPageState extends State<ContactPage> {
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  submittedData[index] = Contact(nameController.text,
-                      phoneNumberController.text, _editingDate, _editingcolor);
+                  submittedData[index] = Contact(
+                    nameController.text,
+                    phoneNumberController.text,
+                    _editingDate,
+                    _editingcolor,
+                    _editingFile,
+                  );
                 });
                 Navigator.of(context).pop();
               },
@@ -495,7 +533,9 @@ class ContactListItem extends StatelessWidget {
               Text(
                   'Color: ${contact.color.value.toRadixString(16).padLeft(9, '#').toUpperCase()}'),
             ],
-          )
+          ),
+          Text('File name : ${contact.file}'),
+          const SizedBox(width: 8),
         ],
       ),
       trailing: Row(
